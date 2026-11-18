@@ -1,0 +1,69 @@
+{# SPDX-License-Identifier: AGPL-3.0-only #}
+{#
+    The bank screen, as iDoklad's Finance, Bank: the incoming and outgoing movements, the incoming
+    and the outgoing ones waiting for a pairing, and the bank mail. Pair, unpair and the message open in dialogs over
+    the list. The flash after a pairing made by hand offers Undo, for that pairing only.
+#}
+{% extends 'layout/app.html.twig' %}
+
+{% set crumbs = [{label: 'nav.group.money'|trans}, {label: 'bank.movement.title'|trans}] %}
+{% set messagesTab = tab == 'messages' %}
+
+{% block title %}{{ 'bank.movement.title'|trans }}{% endblock %}
+
+{% block content %}
+    {% set alerts %}
+        {% if paired %}
+            {# No confirmation before pairing: Undo takes it back, as a person expects after a quick action. #}
+            <twig:Ui:Alert tone="success" role="status" data-undo>
+                <span class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                    <span>{{ paired.text }}</span>
+                    <form method="post" action="{{ path('app_bank_movement_undo', {id: paired.movement}) }}" class="m-0">
+                        <input type="hidden" name="_token" value="{{ csrf_token(constant('Foresi\\Banking\\Infrastructure\\Controller\\BankMovementController::ACTION_TOKEN')) }}">
+                        <input type="hidden" name="return" value="{{ paired.return }}">
+                        <twig:Ui:Button type="submit" size="sm" id="bank-undo">{{ 'bank.movement.flash.undo'|trans }}</twig:Ui:Button>
+                    </form>
+                </span>
+            </twig:Ui:Alert>
+        {% endif %}
+        {% for message in app.flashes('success') %}<twig:Ui:Alert tone="success" role="status">{{ message }}</twig:Ui:Alert>{% endfor %}
+        {% for message in app.flashes('warning') %}<twig:Ui:Alert tone="warning" role="status">{{ message }}</twig:Ui:Alert>{% endfor %}
+        {% for message in app.flashes('error') %}<twig:Ui:Alert tone="error" role="alert">{{ message }}</twig:Ui:Alert>{% endfor %}
+    {% endset %}
+    {% if alerts|trim %}<div class="mb-4 grid gap-2">{{ alerts }}</div>{% endif %}
+
+    {% if noAccounts %}
+        <twig:Ui:EmptyState icon="landmark" :title="'bank.movement.empty.no_accounts_title'|trans" :text="'bank.movement.empty.no_accounts_text'|trans">
+            <twig:Ui:Button :href="path('app_firm_index')">{{ 'bank.movement.empty.no_accounts_link'|trans }}</twig:Ui:Button>
+        </twig:Ui:EmptyState>
+    {% else %}
+        <div class="grid grid-cols-1 gap-4">
+            <twig:Ui:Tabs :items="tabs" :label="'bank.movement.views'|trans" />
+            {% set bankFilters = (firms is not empty ? [{name: 'firm', label: 'bank.movement.list.firm'|trans, options: firms, value: firm, pinned: true}] : [])|merge(accounts is not empty ? [{name: 'account', label: 'bank.movement.list.account'|trans, options: accounts, value: account, pinned: true}] : []) %}
+            {% if bankFilters is not empty or not messagesTab %}
+                <twig:Ui:FilterBar id="bank-filters" :action="path('app_bank_movements')" :keep="{tab: tab != 'incoming' ? tab : null}"
+                    :search="messagesTab ? null : {name: 'q', value: text, label: 'bank.movement.list.search_label'|trans, placeholder: 'bank.movement.list.search_placeholder'|trans}"
+                    :filters="bankFilters" :empty="rows is empty" />
+            {% endif %}
+
+            {% set token = messagesTab
+                ? csrf_token(constant('Foresi\\Banking\\Infrastructure\\Controller\\InboundMessageController::ACTION_TOKEN'))
+                : csrf_token(constant('Foresi\\Banking\\Infrastructure\\Controller\\BankMovementController::ACTION_TOKEN')) %}
+            <twig:Ui:DataTable :caption="('bank.movement.tab.' ~ tab)|trans" :columns="columns" :rows="rows" :actionToken="token" density="dense">
+                <twig:block name="empty">
+                    {% if filtered %}
+                        <twig:Ui:EmptyState icon="search" :title="'bank.movement.empty.filtered_title'|trans" :text="'bank.movement.empty.filtered_text'|trans">
+                            <twig:Ui:Button :href="path('app_bank_movements', tab == 'incoming' ? {} : {tab: tab})">{{ 'bank.movement.empty.reset'|trans }}</twig:Ui:Button>
+                        </twig:Ui:EmptyState>
+                    {% else %}
+                        <twig:Ui:EmptyState :icon="tab in ['unmatched', 'outgoing_unmatched'] ? 'circle-check' : (messagesTab ? 'inbox' : 'landmark')" :title="('bank.movement.empty.' ~ tab ~ '_title')|trans" :text="('bank.movement.empty.' ~ tab ~ '_text')|trans" />
+                    {% endif %}
+                </twig:block>
+                <twig:block name="footer">
+                    <span class="num">{{ (messagesTab ? 'bank.message.list.summary' : 'bank.movement.list.summary')|trans({total: page.total}) }}</span>
+                    <twig:Ui:Pagination :page="page.page" :pages="page.pages" :baseUrl="baseUrl" />
+                </twig:block>
+            </twig:Ui:DataTable>
+        </div>
+    {% endif %}
+{% endblock %}
