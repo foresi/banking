@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-namespace Foresi\Banking\Application;
+namespace Foresi\Banking\Contract;
 
 /**
  * What a parser read from a mail: one or more movements, or nothing to record,

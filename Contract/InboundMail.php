@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-namespace Foresi\Banking\Application;
+namespace Foresi\Banking\Contract;
 
 /**
  * One received message, read once and then free of any MIME library. Header

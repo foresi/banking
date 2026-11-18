@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-namespace Foresi\Banking\Application;
+namespace Foresi\Banking\Contract;
 
 /**
  * A bank's mail could not be read. The detail names the field or layout for the

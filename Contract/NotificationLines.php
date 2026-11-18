@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-namespace Foresi\Banking\Application;
+namespace Foresi\Banking\Contract;
 
 /**
  * The visible lines of a notification body, the common ground of every bank's

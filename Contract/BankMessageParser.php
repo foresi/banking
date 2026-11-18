@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-namespace Foresi\Banking\Application;
+namespace Foresi\Banking\Contract;
 
 /**
  * Reads the notification mails of one bank. A country module implements it;

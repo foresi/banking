@@ -6,9 +6,8 @@
 
 declare(strict_types=1);
 
-namespace Foresi\Banking\Application;
+namespace Foresi\Banking\Contract;
 
-use Foresi\Banking\Domain\MovementDirection;
 use Foresi\Shared\Domain\Money;
 
 /**
